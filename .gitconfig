@@ -1,13 +1,36 @@
 [user]
-    name = Gary Bernhardt
-    email = gary.bernhardt@gmail.com
-[diff]
+    name = Felipe Lima
+    email = felipe.lima@gmail.com
+[merge]
+    tool = opendiff
+[difftool]
+    prompt = false
 [color]
+    branch = auto
+    diff = auto
+    status = auto
     ui = auto
+[color "branch"]
+    current = yellow reverse
+    local = yellow
+    remote = green
+[color "diff"]
+    meta = yellow bold
+    frag = magenta bold
+    old = red bold
+    new = green bold
+[color "status"]
+    added = yellow
+    changed = green
+    untracked = cyan
 [alias]
     st = status
-    ci = commit
+    sb = status -sb
     co = checkout
+    ci = commit
+    l  = log
+    pr = pull --rebase
+    dt = difftool
     di = diff
     dc = diff --cached
     amend = commit --amend
@@ -46,3 +69,11 @@
 [merge]
     tool = vimdiff
 
+[diff]
+    tool = vimdiff
+
+[github]
+    user = felipecsl
+
+[core]
+    editor = /usr/bin/vim
