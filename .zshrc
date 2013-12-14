@@ -1,60 +1,62 @@
-setopt promptsubst
+# Set custom prompt
+setopt PROMPT_SUBST
 autoload -U promptinit
 promptinit
 prompt grb
 
+# Initialize completion
 autoload -U compinit
 compinit
 
-# Add paths that should have been there by default
+# Add paths
 export PATH=/usr/local/sbin:/usr/local/bin:${PATH}
 export PATH="$HOME/bin:$PATH"
-export PATH="$PATH:~/.gem/ruby/1.8/bin"
 
-# Add postgres to the path
-export PATH=$PATH:/usr/local/pgsql/bin
-export PATH=$PATH:/Library/PostgreSQL/8.3/bin
-
-# Unbreak broken, non-colored terminal
-export TERM='xterm-color'
+# Colorize terminal
 alias ls='ls -G'
 alias ll='ls -lG'
-alias duh='du -csh'
 export LSCOLORS="ExGxBxDxCxEgEdxbxgxcxd"
 export GREP_OPTIONS="--color"
 
-# Unbreak history
+# Nicer history
 export HISTSIZE=100000
 export HISTFILE="$HOME/.history"
 export SAVEHIST=$HISTSIZE
 
+# Use vim as the editor
 export EDITOR=vi
-# GNU Screen sets -o vi if EDITOR=vi, so we have to force it back. What the
-# hell, GNU?
+# GNU Screen sets -o vi if EDITOR=vi, so we have to force it back.
 set -o emacs
 
+# Use C-x C-e to edit the current command line
 autoload -U edit-command-line
 zle -N edit-command-line
 bindkey '\C-x\C-e' edit-command-line
 
+# By default, zsh considers many characters part of a word (e.g., _ and -).
+# Narrow that down to allow easier skipping through words via M-f and M-b.
 export WORDCHARS='*?[]~&;!$%^<>'
 
+# Highlight search results in ack.
 export ACK_COLOR_MATCH='red'
 
-# ACTUAL CUSTOMIZATION OH NOES!
-gd() { git diff $* | view -; }
-gdc() { gd --cached $*; }
-alias pygrep="grep --include='*.py' $*"
-alias rbgrep="grep --include='*.rb' $*"
-alias r=rails
-alias t="script/test $*"
+# Aliases
+t() {
+    if [ -e script/test ]; then
+        script/test $*
+    else
+        rspec --color spec
+    fi
+}
 alias f="script/features $*"
-alias g="bundle exec guard $*"
-alias sr="screen -r"
-alias gx="gitx"
-alias gxa="gitx --all"
+alias z="zeus $*"
+alias r="script/rails $*"
+function lack() {
+    # The +k clears the screen (it tries to scroll up but there's nowhere to
+    # go)
+    ack --group --color $* | less -r +k
+}
 function mcd() { mkdir -p $1 && cd $1 }
-alias misc="cd /Volumes/misc"
 function cdf() { cd *$1*/ } # stolen from @topfunky
 function das() {
     cd ~/proj/destroyallsoftware.com/destroyallsoftware.com
@@ -67,7 +69,17 @@ function das() {
     . /Volumes/misc/filing/business/destroy\ all\ software\ llc/s3.sh
     . /Volumes/misc/filing/business/destroy\ all\ software\ llc/braintree.sh
 }
+alias v="view -"
+function m() {
+    if [[ "$1" == "das" ]]; then
+        mutt -F ~/.mutt/das.muttrc
+    else
+        ~/proj/thelongpoll/thelongpoll/thelongpoll client -F ~/.mutt/$1.muttrc
+    fi
+}
+alias c="cd"
 
+# Activate the closest virtualenv by looking in parent directories.
 activate_virtualenv() {
     if [ -f env/bin/activate ]; then . env/bin/activate;
     elif [ -f ../env/bin/activate ]; then . ../env/bin/activate;
@@ -76,6 +88,7 @@ activate_virtualenv() {
     fi
 }
 
+# Find the directory of the named Python module.
 python_module_dir () {
     echo "$(python -c "import os.path as _, ${1}; \
         print _.dirname(_.realpath(${1}.__file__[:-1]))"
@@ -98,23 +111,18 @@ python_module_dir () {
 #
 function up()
 {
-    if [ "$1" != "" -a "$2" != "" ]; then
-        local DIR=$1
-        local TARGET=$2
-    elif [ "$1" ]; then
-        local DIR=$PWD
-        local TARGET=$1
-    fi
+    local DIR=$PWD
+    local TARGET=$1
     while [ ! -e $DIR/$TARGET -a $DIR != "/" ]; do
         DIR=$(dirname $DIR)
     done
     test $DIR != "/" && echo $DIR/$TARGET
 }
 
-# MacPorts Installer addition on 2010-04-21_at_09:59:50: adding an appropriate PATH variable for use with MacPorts.
-export PATH=/opt/local/bin:/opt/local/sbin:/opt/local/Library/Frameworks/Python.framework/Versions/2.6/bin:/opt/local/lib/mysql5/bin:$PATH
-# Finished adapting your PATH environment variable for use with MacPorts.
+### Added by the Heroku Toolbelt
+export PATH="/usr/local/heroku/bin:$PATH"
 
-PATH=$PATH:$HOME/.rvm/bin # Add RVM to PATH for scripting
-
+# Initialize RVM
+PATH=$PATH:$HOME/.rvm/bin
 [[ -s "$HOME/.rvm/scripts/rvm" ]] && source "$HOME/.rvm/scripts/rvm"
+

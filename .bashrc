@@ -23,7 +23,7 @@ export HISTSIZE=10000
 # Append to the history file when exiting instead of overwriting it
 shopt -s histappend
 
-# ACTUAL CUSTOMIZATION OH NOES!
+# Git prompt components
 function minutes_since_last_commit {
     now=`date +%s`
     last_commit=`git log --pretty=format:'%at' -1`
@@ -49,10 +49,6 @@ grb_git_prompt() {
     fi
 }
 PS1="\h:\W\$(grb_git_prompt) \u\$ "
-gd() { git diff $* | view -; }
-gdc() { gd --cached $*; }
-alias pygrep="grep --include='*.py' $*"
-alias rbgrep="grep --include='*.rb' $*"
 
 activate_virtualenv() {
     if [ -f env/bin/activate ]; then . env/bin/activate;
@@ -68,11 +64,7 @@ python_module_dir () {
         )"
 }
 
-# MacPorts Installer addition on 2010-04-21_at_09:59:50: adding an appropriate PATH variable for use with MacPorts.
-export PATH=/opt/local/bin:/opt/local/sbin:/opt/local/Library/Frameworks/Python.framework/Versions/2.6/bin:$PATH
-# Finished adapting your PATH environment variable for use with MacPorts.
-
 source ~/bin/git-completion.bash
 
-
 PATH=$PATH:$HOME/.rvm/bin # Add RVM to PATH for scripting
+

@@ -29,3 +29,12 @@
 [submodule ".vim/bundle/vim-matchit"]
 	path = .vim/bundle/vim-matchit
 	url = https://github.com/tsaleh/vim-matchit.git
+[submodule ".vim/bundle/vim-slim"]
+	path = .vim/bundle/vim-slim
+	url = https://github.com/slim-template/vim-slim
+[submodule ".vim/bundle/vim-dispatch"]
+	path = .vim/bundle/vim-dispatch
+	url = https://github.com/tpope/vim-dispatch
+[submodule ".vim/bundle/ctrlp.vim"]
+	path = .vim/bundle/ctrlp.vim
+	url = https://github.com/kien/ctrlp.vim
