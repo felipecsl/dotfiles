@@ -12,6 +12,10 @@ compinit
 export PATH=/usr/local/sbin:/usr/local/bin:${PATH}
 export PATH="$HOME/bin:$PATH"
 
+# By default, ^S freezes terminal output and ^Q resumes it. Disable that so
+# that those keys can be used for other things.
+unsetopt flowcontrol
+
 # Colorize terminal
 alias ls='ls -G'
 alias ll='ls -lG'
@@ -41,7 +45,7 @@ export WORDCHARS='*?[]~&;!$%^<>'
 export ACK_COLOR_MATCH='red'
 
 # Aliases
-t() {
+function t() {
     if [ -e script/test ]; then
         script/test $*
     else
@@ -61,13 +65,9 @@ function cdf() { cd *$1*/ } # stolen from @topfunky
 function das() {
     cd ~/proj/destroyallsoftware.com/destroyallsoftware.com
     pwd
-    export RUBY_HEAP_MIN_SLOTS=1000000
-    export RUBY_HEAP_SLOTS_INCREMENT=1000000
-    export RUBY_HEAP_SLOTS_GROWTH_FACTOR=1
-    export RUBY_GC_MALLOC_LIMIT=1000000000
-    export RUBY_HEAP_FREE_MIN=500000
-    . /Volumes/misc/filing/business/destroy\ all\ software\ llc/s3.sh
-    . /Volumes/misc/filing/business/destroy\ all\ software\ llc/braintree.sh
+    . ~/Documents/filing/business/destroy\ all\ software\ llc/s3.sh
+    . ~/Documents/filing/business/destroy\ all\ software\ llc/braintree.sh
+    . ~/Documents/filing/business/destroy\ all\ software\ llc/cloudfront.sh
 }
 alias v="view -"
 function m() {
@@ -119,10 +119,44 @@ function up()
     test $DIR != "/" && echo $DIR/$TARGET
 }
 
+# Switch projects
+function p() {
+    proj=$(ls ~/proj | selecta)
+    if [[ -n "$proj" ]]; then
+        cd ~/proj/$proj
+    fi
+}
+
+# By default, ^S freezes terminal output and ^Q resumes it. Disable that so
+# that those keys can be used for other things.
+unsetopt flowcontrol
+# Run Selecta in the current working directory, appending the selected path, if
+# any, to the current command.
+function insert-selecta-path-in-command-line() {
+    local selected_path
+    # Print a newline or we'll clobber the old prompt.
+    echo
+    # Find the path; abort if the user doesn't select anything.
+    selected_path=$(find * -type f | selecta) || return
+    # Append the selection to the current command buffer.
+    eval 'LBUFFER="$LBUFFER$selected_path"'
+    # Redraw the prompt since Selecta has drawn several new lines of text.
+    zle reset-prompt
+}
+# Create the zle widget
+zle -N insert-selecta-path-in-command-line
+# Bind the key to the newly created widget
+bindkey "^S" "insert-selecta-path-in-command-line"
+
 ### Added by the Heroku Toolbelt
 export PATH="/usr/local/heroku/bin:$PATH"
 
 # Initialize RVM
-PATH=$PATH:$HOME/.rvm/bin
-[[ -s "$HOME/.rvm/scripts/rvm" ]] && source "$HOME/.rvm/scripts/rvm"
+#PATH=$PATH:$HOME/.rvm/bin
+#[[ -s "$HOME/.rvm/scripts/rvm" ]] && source "$HOME/.rvm/scripts/rvm"
 
+#export PATH="$HOME/.rbenv/bin:$PATH"
+#eval "$(rbenv init -)"
+
+#source /usr/local/share/chruby/chruby.sh
+#source /usr/local/share/chruby/auto.sh

@@ -37,8 +37,9 @@ set shell=bash
 set t_ti= t_te=
 " keep more context when scrolling off the end of a buffer
 set scrolloff=3
-" Store temporary files in a central spot
-set backup
+" Don't make backups at all
+set nobackup
+set nowritebackup
 set backupdir=~/.vim-tmp,~/.tmp,~/tmp,/var/tmp,/tmp
 set directory=~/.vim-tmp,~/.tmp,~/tmp,/var/tmp,/tmp
 " allow backspacing over everything in insert mode
@@ -69,6 +70,11 @@ set modelines=3
 " Turn folding off for real, hopefully
 set foldmethod=manual
 set nofoldenable
+" Insert only one space when joining lines that contain sentence-terminating
+" punctuation like `.`.
+set nojoinspaces
+" If a file is changed outside of vim, automatically reload it without asking
+set autoread
 
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " CUSTOM AUTOCMDS
@@ -102,6 +108,12 @@ augroup vimrcEx
   " to run commands there.
   autocmd! CmdwinEnter * :unmap <cr>
   autocmd! CmdwinLeave * :call MapCR()
+
+  " *.md is markdown
+  autocmd! BufNewFile,BufRead *.md setlocal ft=
+
+  " indent slim two spaces, not four
+  autocmd! FileType *.slim set sw=2 sts=2 et
 augroup END
 
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
@@ -157,7 +169,7 @@ function! InsertTabWrapper()
         return "\<c-p>"
     endif
 endfunction
-inoremap <tab> <c-r>=InsertTabWrapper()<cr>
+inoremap <expr> <tab> InsertTabWrapper()
 inoremap <s-tab> <c-n>
 
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
@@ -172,7 +184,7 @@ inoremap <s-tab> <c-n>
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " OPEN FILES IN DIRECTORY OF CURRENT FILE
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-cnoremap %% <C-R>=expand('%:h').'/'<cr>
+cnoremap <expr> %% expand('%:h').'/'
 map <leader>e :edit %%
 map <leader>v :view %%
 
@@ -263,7 +275,7 @@ function! ShowRoutes()
   " Delete everything
   :normal 1GdG
   " Put routes output in buffer
-  :0r! zeus rake -s routes
+  :0r! rake -s routes
   " Size window to number of lines (1 plus rake output length)
   :exec ":normal " . line("$") . "_ "
   " Move cursor to bottom
@@ -272,18 +284,6 @@ function! ShowRoutes()
   :normal dd
 endfunction
 map <leader>gR :call ShowRoutes()<cr>
-map <leader>gv :CommandTFlush<cr>\|:CommandT app/views<cr>
-map <leader>gc :CommandTFlush<cr>\|:CommandT app/controllers<cr>
-map <leader>gm :CommandTFlush<cr>\|:CommandT app/models<cr>
-map <leader>gh :CommandTFlush<cr>\|:CommandT app/helpers<cr>
-map <leader>gl :CommandTFlush<cr>\|:CommandT lib<cr>
-map <leader>gp :CommandTFlush<cr>\|:CommandT public<cr>
-map <leader>gs :CommandTFlush<cr>\|:CommandT public/stylesheets<cr>
-map <leader>gf :CommandTFlush<cr>\|:CommandT features<cr>
-map <leader>gg :topleft 100 :split Gemfile<cr>
-map <leader>gt :CommandTFlush<cr>\|:CommandTTag<cr>
-map <leader>f :CommandTFlush<cr>\|:CommandT<cr>
-map <leader>F :CommandTFlush<cr>\|:CommandT %%<cr>
 
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " SWITCH BETWEEN TEST AND PRODUCTION CODE
@@ -335,7 +335,7 @@ function! RunTestFile(...)
     endif
 
     " Run the tests for the previously-marked file.
-    let in_test_file = match(expand("%"), '\(.feature\|_spec.rb\)$') != -1
+    let in_test_file = match(expand("%"), '\(.feature\|_spec.rb\|_test.py\)$') != -1
     if in_test_file
         call SetTestFile()
     elseif !exists("t:grb_test_file")
@@ -378,6 +378,9 @@ function! RunTests(filename)
         " Fall back to a blocking test run with Bundler
         elseif filereadable("Gemfile")
             exec ":!bundle exec rspec --color " . a:filename
+        " If we see python-looking tests, assume they should be run with Nose
+        elseif strlen(glob("test/**/*.py") . glob("tests/**/*.py"))
+            exec "!nosetests " . a:filename
         " Fall back to a normal blocking test run
         else
             exec ":!rspec --color " . a:filename
@@ -385,13 +388,6 @@ function! RunTests(filename)
     end
 endfunction
 
-
-""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-" CtrlP Configuration
-""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-let g:ctrlp_custom_ignore = '\v[\/]\.(git|hg|svn)$'
-let g:ctrlp_user_command = 'find %s -type f'
-let g:ctrlp_use_caching = 0
 
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " Md5 COMMAND
@@ -501,7 +497,7 @@ command! RemoveFancyCharacters :call RemoveFancyCharacters()
 " command. See usage below.
 function! SelectaCommand(choice_command, selecta_args, vim_command)
   try
-    silent let selection = system(a:choice_command . " | selecta " . a:selecta_args)
+    let selection = system(a:choice_command . " | selecta " . a:selecta_args)
   catch /Vim:Interrupt/
     " Swallow the ^C so that the redraw below happens; otherwise there will be
     " leftovers from selecta on the screen
@@ -512,9 +508,19 @@ function! SelectaCommand(choice_command, selecta_args, vim_command)
   exec a:vim_command . " " . selection
 endfunction
 
-" Find all files in all non-dot directories starting in the working directory.
-" Fuzzy select one of those. Open the selected file with :e.
-nnoremap <leader>f :call SelectaCommand("find * -type f", "", ":e")<cr>
+function! SelectaFile(path)
+  call SelectaCommand("find " . a:path . "/* -type f", "", ":e")
+endfunction
+
+nnoremap <leader>f :call SelectaFile(".")<cr>
+nnoremap <leader>gv :call SelectaFile("app/views")<cr>
+nnoremap <leader>gc :call SelectaFile("app/controllers")<cr>
+nnoremap <leader>gm :call SelectaFile("app/models")<cr>
+nnoremap <leader>gh :call SelectaFile("app/helpers")<cr>
+nnoremap <leader>gl :call SelectaFile("lib")<cr>
+nnoremap <leader>gp :call SelectaFile("public")<cr>
+nnoremap <leader>gs :call SelectaFile("public/stylesheets")<cr>
+nnoremap <leader>gf :call SelectaFile("features")<cr>
 
 function! SelectaIdentifier()
   " Yank the word under the cursor into the z register
