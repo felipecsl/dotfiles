@@ -1,5 +1,5 @@
 [user]
-    name = Felipe Lima
+	name = Felipe Lima
     email = felipe.lima@gmail.com
 [merge]
     tool = opendiff
@@ -26,8 +26,8 @@
 [alias]
     st = status
     sb = status -sb
-    ci = commit --verbose
     co = checkout
+    ci = commit
     l  = log
     pr = pull --rebase
     dt = difftool
@@ -58,10 +58,10 @@
     #   ra = recent commits, all reachable refs
     #   l = all commits, only current branch
     #   la = all commits, all reachable refs
-    head = !git r -1
+    head = !git l -1
     h = !git head
     hp = "!. ~/.githelpers && show_git_head"
-    r = !GIT_NO_PAGER=1 git l -30
+    r = !git l -30
     ra = !git r --all
     l = "!. ~/.githelpers && pretty_git_log"
     la = !git l --all
@@ -77,3 +77,10 @@
 
 [core]
     editor = /usr/bin/vim
+	pager = diff-highlight | diff-so-fancy | less --tabs=1,5 -R
+[push]
+	default = simple
+[filter "lfs"]
+	clean = git-lfs clean %f
+	smudge = git-lfs smudge %f
+	required = true
