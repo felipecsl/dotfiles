@@ -1,5 +1,5 @@
 [user]
-	name = Felipe Lima
+    name = Felipe Lima
     email = felipe.lima@gmail.com
 [merge]
     tool = opendiff
@@ -65,22 +65,18 @@
     ra = !git r --all
     l = "!. ~/.githelpers && pretty_git_log"
     la = !git l --all
-
 [merge]
     tool = vimdiff
-
 [diff]
     tool = vimdiff
-
 [github]
     user = felipecsl
-
 [core]
     editor = /usr/bin/vim
-	pager = diff-highlight | diff-so-fancy | less --tabs=1,5 -R
+    pager = diff-highlight | diff-so-fancy | less --tabs=1,5 -R
 [push]
-	default = simple
+    default = simple
 [filter "lfs"]
-	clean = git-lfs clean %f
-	smudge = git-lfs smudge %f
-	required = true
+    clean = git-lfs clean %f
+    smudge = git-lfs smudge %f
+    required = true
