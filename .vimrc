@@ -1,8 +1,10 @@
 " This is Gary Bernhardt's .vimrc file
 " vim:set ts=2 sts=2 sw=2 expandtab:
 
+" remove all existing autocmds
 autocmd!
 
+" initialize @tpope, whence all vim plugins come
 call pathogen#incubate()
 
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
@@ -28,6 +30,7 @@ set ignorecase smartcase
 set cursorline
 set cmdheight=1
 set switchbuf=useopen
+" Always show tab bar at the top
 set showtabline=2
 set winwidth=79
 " This makes RVM work inside Vim. I have no idea why.
@@ -75,6 +78,10 @@ set nofoldenable
 set nojoinspaces
 " If a file is changed outside of vim, automatically reload it without asking
 set autoread
+" Use the old vim regex engine (version 1, as opposed to version 2, which was
+" introduced in Vim 7.3.969). The Ruby syntax highlighting is significantly
+" slower with the new regex engine.
+set re=1
 
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " CUSTOM AUTOCMDS
@@ -257,7 +264,7 @@ function! InlineVariable()
     " Find the next occurence of the variable
     exec '/\<' . @a . '\>'
     " Replace that occurence with the text we yanked
-    exec ':.s/\<' . @a . '\>/' . @b
+    exec ':.s/\<' . @a . '\>/' . escape(@b, "/")
     :let @a = l:tmp_a
     :let @b = l:tmp_b
 endfunction
@@ -334,14 +341,17 @@ function! RunTestFile(...)
         let command_suffix = ""
     endif
 
-    " Run the tests for the previously-marked file.
-    let in_test_file = match(expand("%"), '\(.feature\|_spec.rb\|_test.py\)$') != -1
+    " Are we in a test file?
+    let in_test_file = match(expand("%"), '\(.feature\|_spec.rb\|test_.*\.py\|_test.py\)$') != -1
+
+    " Run the tests for the previously-marked file (or the current file if
+    " it's a test).
     if in_test_file
-        call SetTestFile()
+        call SetTestFile(command_suffix)
     elseif !exists("t:grb_test_file")
         return
     end
-    call RunTests(t:grb_test_file . command_suffix)
+    call RunTests(t:grb_test_file)
 endfunction
 
 function! RunNearestTest()
@@ -349,9 +359,9 @@ function! RunNearestTest()
     call RunTestFile(":" . spec_line_number)
 endfunction
 
-function! SetTestFile()
+function! SetTestFile(command_suffix)
     " Set the spec file that tests will be run for.
-    let t:grb_test_file=@%
+    let t:grb_test_file=@% . a:command_suffix
 endfunction
 
 function! RunTests(filename)
@@ -423,13 +433,6 @@ command! InsertTime :normal a<c-r>=strftime('%F %H:%M:%S.0 %z')<cr>
 command! FindConditionals :normal /\<if\>\|\<unless\>\|\<and\>\|\<or\>\|||\|&&<cr>
 
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-" Diff tab management: open the current git diff in a tab
-""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-command! GdiffInTab tabedit %|vsplit|Gdiff
-nnoremap <leader>d :GdiffInTab<cr>
-nnoremap <leader>D :tabclose<cr>
-
-""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " Test quickfix list management
 "
 " If the tests write a tmp/quickfix file, these mappings will navigate through
@@ -498,6 +501,9 @@ command! RemoveFancyCharacters :call RemoveFancyCharacters()
 function! SelectaCommand(choice_command, selecta_args, vim_command)
   try
     let selection = system(a:choice_command . " | selecta " . a:selecta_args)
+    " Escape spaces in the file name. That ensures that it's a single argument
+    " when concatenated with vim_command and run with exec.
+    let selection = substitute(selection, ' ', '\\ ', "g")
   catch /Vim:Interrupt/
     " Swallow the ^C so that the redraw below happens; otherwise there will be
     " leftovers from selecta on the screen
@@ -508,20 +514,21 @@ function! SelectaCommand(choice_command, selecta_args, vim_command)
   exec a:vim_command . " " . selection
 endfunction
 
-function! SelectaFile(path)
-  call SelectaCommand("find " . a:path . "/* -type f", "", ":e")
+function! SelectaFile(path, glob)
+  call SelectaCommand("find " . a:path . "/* -type f -and -iname '" . a:glob . "' -and -not -iname '*.pyc'", "", ":e")
 endfunction
 
-nnoremap <leader>f :call SelectaFile(".")<cr>
-nnoremap <leader>gv :call SelectaFile("app/views")<cr>
-nnoremap <leader>gc :call SelectaFile("app/controllers")<cr>
-nnoremap <leader>gm :call SelectaFile("app/models")<cr>
-nnoremap <leader>gh :call SelectaFile("app/helpers")<cr>
-nnoremap <leader>gl :call SelectaFile("lib")<cr>
-nnoremap <leader>gp :call SelectaFile("public")<cr>
-nnoremap <leader>gs :call SelectaFile("public/stylesheets")<cr>
-nnoremap <leader>gf :call SelectaFile("features")<cr>
+nnoremap <leader>f :call SelectaFile(".", "*")<cr>
+nnoremap <leader>gv :call SelectaFile("app/views", "*")<cr>
+nnoremap <leader>gc :call SelectaFile("app/controllers", "*")<cr>
+nnoremap <leader>gm :call SelectaFile("app/models", "*")<cr>
+nnoremap <leader>gh :call SelectaFile("app/helpers", "*")<cr>
+nnoremap <leader>gl :call SelectaFile("lib", "*")<cr>
+nnoremap <leader>gp :call SelectaFile("public", "*")<cr>
+nnoremap <leader>gs :call SelectaFile("public/stylesheets", "*.sass")<cr>
+nnoremap <leader>gf :call SelectaFile("features", "*")<cr>
 
+"Fuzzy select
 function! SelectaIdentifier()
   " Yank the word under the cursor into the z register
   normal "zyiw

@@ -12,10 +12,6 @@ compinit
 export PATH=/usr/local/sbin:/usr/local/bin:${PATH}
 export PATH="$HOME/bin:$PATH"
 
-# By default, ^S freezes terminal output and ^Q resumes it. Disable that so
-# that those keys can be used for other things.
-unsetopt flowcontrol
-
 # Colorize terminal
 alias ls='ls -G'
 alias ll='ls -lG'
@@ -45,13 +41,6 @@ export WORDCHARS='*?[]~&;!$%^<>'
 export ACK_COLOR_MATCH='red'
 
 # Aliases
-function t() {
-    if [ -e script/test ]; then
-        script/test $*
-    else
-        rspec --color spec
-    fi
-}
 alias f="script/features $*"
 alias z="zeus $*"
 alias r="script/rails $*"
@@ -63,13 +52,12 @@ function lack() {
 function mcd() { mkdir -p $1 && cd $1 }
 function cdf() { cd *$1*/ } # stolen from @topfunky
 function das() {
-    cd ~/proj/destroyallsoftware.com/destroyallsoftware.com
+    cd ~/proj/das
     pwd
     . ~/Documents/filing/business/destroy\ all\ software\ llc/s3.sh
     . ~/Documents/filing/business/destroy\ all\ software\ llc/braintree.sh
     . ~/Documents/filing/business/destroy\ all\ software\ llc/cloudfront.sh
 }
-alias v="view -"
 function m() {
     if [[ "$1" == "das" ]]; then
         mutt -F ~/.mutt/das.muttrc
@@ -160,3 +148,6 @@ export PATH="/usr/local/heroku/bin:$PATH"
 
 #source /usr/local/share/chruby/chruby.sh
 #source /usr/local/share/chruby/auto.sh
+
+# OPAM configuration
+. /Users/grb/.opam/opam-init/init.zsh > /dev/null 2> /dev/null || true
