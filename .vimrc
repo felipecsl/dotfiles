@@ -23,6 +23,8 @@ set autoindent
 set laststatus=2
 set showmatch
 set incsearch
+" show line numbers
+set number
 set hlsearch
 " make searches case-sensitive only if they contain upper-case characters
 set ignorecase smartcase
